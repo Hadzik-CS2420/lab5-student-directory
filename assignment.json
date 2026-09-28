@@ -1,10 +1,17 @@
 {
   "assignment": {
-    "canvas_title":         "💻 Assignment: Lab 5 - Student Directory",
-    "points_possible":      130,
-    "submission_types":     ["online_url"],
-    "github_classroom":     true,
+    "canvas_title": "💻 Assignment: Lab 5 - Student Directory",
+    "points_possible": 100,
+    "submission_types": [
+      "online_upload"
+    ],
+    "github_classroom": true,
     "github_classroom_url": "",
-    "github_template_url":  ""
+    "github_template_url": "",
+    "allowed_extensions": [
+      "png",
+      "jpg",
+      "jpeg"
+    ]
   }
 }
