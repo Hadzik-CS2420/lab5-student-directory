@@ -1,6 +1,6 @@
 name: Autograding Tests
 on:
-  - push
+  - workflow_dispatch
   - repository_dispatch
 permissions:
   checks: write
@@ -50,7 +50,7 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 3
+        max-score: 2
 
     - name: "Chaining: Constructor Custom Capacity (2 points)"
       id: chain-ctor-custom
@@ -110,7 +110,7 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 3
+        max-score: 2
 
     - name: "Chaining: Hash Within Bounds (3 points)"
       id: chain-hash-bounds
@@ -125,7 +125,7 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 3
+        max-score: 2
 
     - name: "Chaining: Hash Different Keys (4 points)"
       id: chain-hash-different
@@ -140,7 +140,7 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 4
+        max-score: 3
 
     - name: "Chaining: Insert Single Entry (3 points)"
       id: chain-insert-single
@@ -155,7 +155,7 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 3
+        max-score: 2
 
     - name: "Chaining: Insert Multiple Entries (3 points)"
       id: chain-insert-multiple
@@ -170,7 +170,7 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 3
+        max-score: 2
 
     - name: "Chaining: Insert Duplicate Key Updates Value (4 points)"
       id: chain-insert-dup
@@ -185,7 +185,7 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 4
+        max-score: 3
 
     - name: "Chaining: Search Finds Existing Key (3 points)"
       id: chain-search-found
@@ -200,7 +200,7 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 3
+        max-score: 2
 
     - name: "Chaining: Search Returns Null For Missing Key (3 points)"
       id: chain-search-missing
@@ -215,7 +215,7 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 3
+        max-score: 2
 
     - name: "Chaining: Search Empty Table (2 points)"
       id: chain-search-empty
@@ -320,7 +320,7 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 2
+        max-score: 1
 
     - name: "Chaining: Load Factor Empty (3 points)"
       id: chain-lf-empty
@@ -350,7 +350,7 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 4
+        max-score: 3
 
     - name: "Chaining: Resize Triggers On High Load Factor (4 points)"
       id: chain-resize-trigger
@@ -395,7 +395,7 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 3
+        max-score: 2
 
     - name: "Chaining: Print Shows Entries (4 points)"
       id: chain-print-entries
@@ -410,7 +410,7 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 4
+        max-score: 2
 
     - name: "Chaining: Print Format Bucket Index (3 points)"
       id: chain-print-format
@@ -425,7 +425,7 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 3
+        max-score: 2
 
     - name: "Probing: Constructor Default Capacity (5 points)"
       id: probe-ctor-default
@@ -440,7 +440,7 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 5
+        max-score: 3
 
     - name: "Probing: Insert Single Entry (2 points)"
       id: probe-insert-single
@@ -470,7 +470,7 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 3
+        max-score: 2
 
     - name: "Probing: Insert Duplicate Key Updates Value (2 points)"
       id: probe-insert-dup
@@ -515,7 +515,7 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 3
+        max-score: 2
 
     - name: "Probing: Search Returns Null For Missing Key (2 points)"
       id: probe-search-missing
@@ -650,7 +650,7 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 3
+        max-score: 2
 
     - name: "Probing: Resize Triggers On High Load Factor (5 points)"
       id: probe-resize-trigger
@@ -665,7 +665,7 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 5
+        max-score: 2
 
     - name: "Probing: Resize Preserves All Entries (5 points)"
       id: probe-resize-preserve
@@ -680,7 +680,7 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 5
+        max-score: 2
 
     - name: "Probing: Resize Clears Tombstones (5 points)"
       id: probe-resize-tombstones
@@ -695,7 +695,7 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 5
+        max-score: 1
 
     - name: Autograding Reporter
       uses: classroom-resources/autograding-grading-reporter@v1
