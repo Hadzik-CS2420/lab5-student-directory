@@ -153,14 +153,57 @@ def run_suite():
                      "Fix the compile errors and run this again.")
 
     out = os.path.join(tempfile.gettempdir(), "lab5-student-directory_results.json")
+    if os.path.exists(out):
+        os.remove(out)
     # A non-zero exit just means tests failed, which is expected while you are
     # still working -- so the return code is deliberately ignored here.
-    subprocess.run([exe, "--gtest_output=json:" + out],
-                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    if not os.path.exists(out):
-        sys.exit("run_tests produced no results file.")
-    with open(out, encoding="utf-8") as fh:
-        return json.load(fh)
+    try:
+        subprocess.run([exe, "--gtest_output=json:" + out],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                       timeout=60)
+    except subprocess.TimeoutExpired:
+        pass
+    if os.path.exists(out):
+        with open(out, encoding="utf-8") as fh:
+            return json.load(fh)
+    return run_one_by_one(exe)
+
+
+def run_one_by_one(exe):
+    """Score each test in its own process.
+
+    gtest writes its results file only when the whole run finishes, so one
+    test that crashes (a nullptr dereference) or hangs (an iterator that never
+    advances) would otherwise leave nothing to score. The autograder runs every
+    test separately with a 10-second limit, so doing the same here keeps this
+    scorecard's number identical to the one you are graded on.
+    """
+    print("The test program crashed or hung partway through, so each test is")
+    print("being run on its own instead. This takes a little longer.\n")
+    suites, broke = {}, []
+    for _, tests in SECTIONS:
+        for key, _ in tests:
+            suite, name = key.split(".")
+            try:
+                rc = subprocess.run([exe, "--gtest_filter=" + key],
+                                    stdout=subprocess.DEVNULL,
+                                    stderr=subprocess.DEVNULL,
+                                    timeout=10).returncode
+                why = "crashed" if rc not in (0, 1) else None
+            except subprocess.TimeoutExpired:
+                rc, why = None, "hung (over 10 seconds)"
+            if why:
+                broke.append((key, why))
+            case = {"name": name}
+            if rc != 0:
+                case["failures"] = [{"failure": why or "failed"}]
+            suites.setdefault(suite, []).append(case)
+    if broke:
+        print("These tests did not finish -- start with them:")
+        for key, why in broke:
+            print("    %-50s %s" % (key, why))
+        print("")
+    return {"testsuites": [{"name": s, "testsuite": c} for s, c in suites.items()]}
 
 
 def tally(results):
@@ -236,8 +279,8 @@ def main():
         print("")
     else:
         print("")
-        print("  Full marks. Commit, push, and submit your repository URL")
-        print("  in Canvas.")
+        print("  Full marks. Commit and push, then upload a screenshot of this")
+        print("  scorecard -- header included -- to Canvas.")
         print("")
 
     # Exit 0 always. This is a report, not a gate; a non-zero exit here would

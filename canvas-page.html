@@ -1,192 +1,300 @@
-<!-- Canvas LMS HTML Fragment — paste into the Rich Content Editor (HTML view) -->
+<!-- Canvas LMS HTML Fragment — hand-authored. Collapsible sections follow the CS 1400
+     code-together pattern: details/summary with the heading inside the summary. Verified
+     to survive Canvas's HTML sanitiser; keyboard-accessible natively, no JS or ARIA.
+     Matches the structure of Lab 3 and Lab 4. No SVG is embedded.
+     Points per TODO are summed from tests/scorecard.py by the TODO each test sits under in
+     tests/lab5_test.cpp; scorecard.py and classroom.yml agree test for test (44 tests, 100).
+     Starting score (31/100) measured by building the starter against Google Test 1.14. -->
 
-<h2>💻 Assignment: Lab 5 - Student Directory</h2>
+<h3>&#x1F3AF; Overview</h3>
+<p>CT 11 resolved collisions by giving every bucket its own linked list. CT 12 did it with no lists at all, probing forward through one flat array. This lab asks you to build both yourself, from empty method bodies.</p>
+<p>The scenario is a student directory: names are the keys and student IDs are the values, the same data you used in CT 11 and CT 12. Part 1 is a <code>ChainingHashTable</code>; Part 2 is a <code>ProbingHashTable</code> with tombstone deletion. Two files, <strong>13 TODOs</strong> (one of them already done for you), <strong>100 points</strong>, and you can check your own score at any time.</p>
 
-<details style="border: 1px solid #d7dae0; border-left: 4px solid #1c7e45; border-radius: 8px; padding: .5rem 1rem; margin: .6rem 0; background: #fcfcfd;">
-<summary style="cursor: pointer; list-style: none;"><h3 style="display: inline-block; margin: .25rem 0; font-size: 1.2rem; vertical-align: middle;">&#x1F3AF; Overview</h3></summary>
+<div style="padding: 14px 18px; border-radius: 4px; margin-bottom: 16px; background-color: #fcf8e3; border: 1px solid #faebcc; color: #8a6d3b;">
+    <strong>This is individual work, not a code-together.</strong> Every TODO names the Code-Together where the same method was built in class &mdash; CT 11 for chaining, CT 12 for probing. Go back to those files when you get stuck.
+</div>
 
-<p>In this assignment you will build a student directory using two hash table implementations from scratch, practicing every core concept from Module 5. Student names are the keys and student IDs are the values &mdash; the same scenario you worked with in CT11 and CT12.</p>
-<p>- <strong>Hash functions</strong> &mdash; converting string keys to array indices using a custom hash algorithm
-- <strong>Modulo mapping</strong> &mdash; mapping hash values into a fixed-size bucket array
-- <strong>Separate chaining (open hashing)</strong> &mdash; resolving collisions with linked lists at each bucket
-- <strong>Linear probing (closed hashing)</strong> &mdash; resolving collisions by scanning forward in the array
-- <strong>Tombstone deletion</strong> &mdash; marking slots as deleted so probing sequences aren't broken
-- <strong>Load factor</strong> &mdash; tracking how full the table is (<code>size / capacity</code>)
-- <strong>Resizing &amp; rehashing</strong> &mdash; growing the table and reinserting all entries when the load factor is too high</p>
-</details>
-
-<details style="border: 1px solid #d7dae0; border-left: 4px solid #1c7e45; border-radius: 8px; padding: .5rem 1rem; margin: .6rem 0; background: #fcfcfd;">
-<summary style="cursor: pointer; list-style: none;"><h3 style="display: inline-block; margin: .25rem 0; font-size: 1.2rem; vertical-align: middle;">&#x1F4D6; Learning Objectives</h3></summary>
-
-<p>By completing this activity, you will be able to:</p>
+<h3>&#x1F4D6; Learning Objectives</h3>
+<p>By completing this assignment, you will be able to:</p>
 <ul>
-    <li><!-- TODO: Add learning objectives --></li>
+    <li>Turn a string key into a bucket index with a hash function and <code>% capacity</code></li>
+    <li>Resolve collisions with <strong>separate chaining</strong>: a linked list of nodes in every bucket</li>
+    <li>Resolve collisions with <strong>linear probing</strong>: step forward through the array, wrapping around, until a slot is free</li>
+    <li>Delete from a probing table with a <strong>tombstone</strong>, so searches for later keys still find them</li>
+    <li>Track the <strong>load factor</strong> (<code>size / capacity</code>) and resize before it gets too high</li>
+    <li>Resize by <strong>rehashing</strong> every entry into a new, larger table &mdash; and explain why copying slot for slot would be wrong</li>
+    <li>Explain why both tables give O(1) average lookups, and what makes them degrade toward O(n)</li>
 </ul>
-</details>
+
+<div style="padding: 14px 18px; border-radius: 4px; margin-bottom: 16px; background-color: #d9edf7; border: 1px solid #bce8f1; color: #31708f;">
+    <strong>All your work goes in <code>src/ChainingHashTable.cpp</code> and <code>src/ProbingHashTable.cpp</code>.</strong> The headers in <code>include/</code>, <code>src/main.cpp</code> and everything in <code>tests/</code> are provided &mdash; do not modify them. The tests are written against that exact interface.
+</div>
+
+<div style="padding: 14px 18px; border-radius: 4px; margin-bottom: 16px; background-color: #dff0d8; border: 1px solid #d6e9c6; color: #3c763d;">
+    <strong>How you get your score:</strong> run <code>python3 tests/scorecard.py</code> from the top of your repository. It prints the same score you will be graded on, straight away and as often as you like. When it reads 100, push your work and upload a <strong>screenshot of the scorecard</strong> here in Canvas. Full details in <strong>Scoring &amp; Submitting</strong> near the bottom of this page.
+</div>
+
+<div style="padding: 14px 18px; border-radius: 4px; margin-bottom: 16px; background-color: #d9edf7; border: 1px solid #bce8f1; color: #31708f;">
+    <strong>Your scorecard starts at 31, not 0.</strong> The constructors already set <code>capacity_</code>, the probing constructor (TODO 9) is written for you, and several tests check that doing nothing is the right answer &mdash; searching or removing in an empty table, the load factor of an empty table. Even a placeholder <code>hash()</code> that always returns 0 passes two of its three tests. The other 69 points are the real work, and everything that passed early still has to pass once your code is in.
+</div>
+
+<hr />
 
 <details style="border: 1px solid #d7dae0; border-left: 4px solid #1c7e45; border-radius: 8px; padding: .5rem 1rem; margin: .6rem 0; background: #fcfcfd;">
 <summary style="cursor: pointer; list-style: none;"><h3 style="display: inline-block; margin: .25rem 0; font-size: 1.2rem; vertical-align: middle;">&#x1F680; Getting Started</h3></summary>
 
-
-<h4>Step 1: Fork the Repository</h4>
-<p>Click the button below to fork the assignment repository to your GitHub account:</p>
-<p><a style="display: inline-block; padding: 10px 24px; font-size: 1em; color: #fff; background-color: #0b874b; border-radius: 4px; text-decoration: none" href="https://hadzikcs.netlify.app/gh?course=sh/CS2420&task=lab5-student-directory" target="_blank" rel="noopener"><strong>Fork Repository on GitHub</strong></a></p>
-
-<div style="padding: 14px 18px; border-radius: 4px; margin-bottom: 16px; background-color: #fcf8e3; border: 1px solid #faebcc; color: #8a6d3b;">
-    <strong>First time?</strong> You&#x2019;ll need a GitHub account. Sign in (or create one) before clicking the button above.
+<h4>1. Fork the repository</h4>
+<p><a style="display: inline-block; padding: 10px 24px; font-size: 1em; font-weight: 600; color: #fff; background-color: #0b874b; border-radius: 4px; text-decoration: none;" href="https://hadzikcs.netlify.app/gh?course=sh/CS2420&amp;task=lab5-student-directory" target="_blank" rel="noopener">Fork Repository on GitHub &#x1F517;</a></p>
+<blockquote>
+<p><strong>First time?</strong> You&#x2019;ll need a GitHub account. Sign in (or create one) before clicking the button.</p>
+</blockquote>
+<div style="padding: 14px 18px; border-radius: 4px; margin-bottom: 16px; background-color: #d9edf7; border: 1px solid #bce8f1; color: #31708f;">
+    <strong>Course passcode:</strong> <code>dog_pill</code> &#x2014; enter this when prompted by the fork tool. It also asks for your <strong>GitHub username</strong> (not your W number or email).
 </div>
+<blockquote>
+<p>Your new repo is <strong>private</strong>, so it will not appear until you accept the invitation &mdash; check your email or <a href="https://github.com/notifications" target="_blank" rel="noopener">GitHub notifications</a> right after you create it.</p>
+</blockquote>
 
-<h4>Step 2: Clone and open in the Dev Container</h4>
-<pre style="background-color: #1e1e1e; color: #d4d4d4; padding: 12px 16px; border-radius: 4px; overflow-x: auto; font-family: Consolas, 'Courier New', monospace; font-size: 0.875em; line-height: 1.6; margin: 8px 0;">git clone https://github.com/YOUR-USERNAME/lab5-student-directory.git
-code lab5-student-directory</pre>
-<p>When VS Code prompts <strong>&#x201C;Reopen in Container&#x201D;</strong>, click it. Wait for the bottom-left corner to read <strong>Dev Container</strong>. The compiler, CMake and the test framework are already installed inside it &mdash; there is nothing to set up by hand.</p>
-<div style="padding: 14px 18px; border-radius: 4px; margin-bottom: 16px; background-color: #fcf8e3; border: 1px solid #faebcc; color: #8a6d3b;">
-    <strong>Docker Desktop must be running</strong> before you open the project. No prompt? Press <strong>Ctrl+Shift+P</strong> and run <strong>Dev Containers: Reopen in Container</strong>.
-</div>
-<h4>Step 3: Build and check your score</h4>
+<h4>2. Clone and open in the Dev Container</h4>
+<p>Copy the clone URL from your new repository&#x2019;s green <strong>Code</strong> button, then:</p>
+<pre style="background-color: #1e1e1e; color: #d4d4d4; padding: 12px 16px; border-radius: 4px; overflow-x: auto; font-family: Consolas, 'Courier New', monospace; font-size: 0.875em; line-height: 1.6; margin: 8px 0;">git clone https://github.com/Hadzik-CS2420/lab5-student-directory-YOUR-USERNAME.git
+code lab5-student-directory-YOUR-USERNAME</pre>
+<p>When VS Code prompts <strong>&#x201C;Reopen in Container&#x201D;</strong>, click it. Wait for the bottom-left corner to read <strong>Dev Container</strong>.</p>
+<blockquote>
+<p><strong>Docker Desktop must be running</strong> before you open the project. No prompt? Press <strong>Ctrl+Shift+P</strong> and run <strong>Dev Containers: Reopen in Container</strong>.</p>
+</blockquote>
+
+<h4>3. Build</h4>
 <pre style="background-color: #1e1e1e; color: #d4d4d4; padding: 12px 16px; border-radius: 4px; overflow-x: auto; font-family: Consolas, 'Courier New', monospace; font-size: 0.875em; line-height: 1.6; margin: 8px 0;">cmake -B build
-cmake --build build
-python3 tests/scorecard.py</pre>
-<div style="padding: 14px 18px; border-radius: 4px; margin-bottom: 16px; background-color: #dff0d8; border: 1px solid #d6e9c6; color: #3c763d;">
-    <strong>How you get your score:</strong> run <code>python3 tests/scorecard.py</code> from the top of your repository. It prints the same score the autograder awards, straight away and as often as you like. On a fresh clone almost every test fails &mdash; that is the starting line, not a problem. When it reads <strong>100</strong>, push your work and upload a <strong>screenshot of the scorecard</strong> here in Canvas. Do <em>not</em> submit a repository link.
+cmake --build build</pre>
+<p><code>cmake -B build</code> is a one-time step &mdash; it creates the <code>build/</code> folder and downloads Google Test. After that, <code>cmake --build build</code> is all you need after each change.</p>
+
+<p><strong>Checkpoint:</strong> the build finishes and <code>python3 tests/scorecard.py</code> reads <strong>31/100</strong>. That is the correct starting point &mdash; see the note at the top of this page.</p>
+</details>
+
+<details style="border: 1px solid #d7dae0; border-left: 4px solid #1c7e45; border-radius: 8px; padding: .5rem 1rem; margin: .6rem 0; background: #fcfcfd;">
+<summary style="cursor: pointer; list-style: none;"><h3 style="display: inline-block; margin: .25rem 0; font-size: 1.2rem; vertical-align: middle;">&#x25B6;&#xFE0F; Running Your Code</h3></summary>
+
+<h4>Your score</h4>
+<pre style="background-color: #1e1e1e; color: #d4d4d4; padding: 12px 16px; border-radius: 4px; overflow-x: auto; font-family: Consolas, 'Courier New', monospace; font-size: 0.875em; line-height: 1.6; margin: 8px 0;">python3 tests/scorecard.py</pre>
+<p>Run it from the top of your repository &mdash; the folder holding <code>CMakeLists.txt</code>, not from inside <code>tests/</code>. It builds if it needs to, runs every test, and prints a scored breakdown <strong>method by method</strong>, so you can see exactly what to work on next.</p>
+
+<h4>The individual programs</h4>
+<pre style="background-color: #1e1e1e; color: #d4d4d4; padding: 12px 16px; border-radius: 4px; overflow-x: auto; font-family: Consolas, 'Courier New', monospace; font-size: 0.875em; line-height: 1.6; margin: 8px 0;">./build/lab5-student-directory   # the student directory demo
+./build/run_tests                # the test suite</pre>
+
+<p>Work one table, or one method, at a time by filtering:</p>
+<pre style="background-color: #1e1e1e; color: #d4d4d4; padding: 12px 16px; border-radius: 4px; overflow-x: auto; font-family: Consolas, 'Courier New', monospace; font-size: 0.875em; line-height: 1.6; margin: 8px 0;">./build/run_tests --gtest_filter=ChainingTest.*
+./build/run_tests --gtest_filter=ChainingTest.Resize*
+./build/run_tests --gtest_filter=ProbingTest.*</pre>
+<div style="padding: 14px 18px; border-radius: 4px; margin-bottom: 16px; background-color: #fcf8e3; border: 1px solid #faebcc; color: #8a6d3b;">
+    <strong>If a test crashes or hangs, the scorecard still scores you.</strong> A probing loop that never finds an <code>EMPTY</code> slot runs forever, and a bad pointer in a chain crashes the whole test program. When that happens the scorecard runs every test on its own &mdash; exactly as the autograder does, with the same 10-second limit &mdash; and lists the ones that crashed or hung at the top. Start with those.
 </div>
+<blockquote>
+<p>Read the <strong>first</strong> failure, not the last. Later failures are usually the same missing piece showing up again &mdash; <code>insert()</code> especially, since almost every other test calls it first.</p>
+</blockquote>
 </details>
 
 <details style="border: 1px solid #d7dae0; border-left: 4px solid #1c7e45; border-radius: 8px; padding: .5rem 1rem; margin: .6rem 0; background: #fcfcfd;">
-<summary style="cursor: pointer; list-style: none;"><h3 style="display: inline-block; margin: .25rem 0; font-size: 1.2rem; vertical-align: middle;">&#x1F4DD; What You&#x2019;ll Do</h3></summary>
+<summary style="cursor: pointer; list-style: none;"><h3 style="display: inline-block; margin: .25rem 0; font-size: 1.2rem; vertical-align: middle;">Order to Work In</h3></summary>
 
-<p>Open each source file and complete the <code>TODO</code> comments. Each TODO tells you what to write, and the <strong>DISCUSSION</strong> comments explain the &#x201C;why&#x201D; behind the code. We&#x2019;ll work through these together in class.</p>
-</details>
+<p>Do the chaining table first (TODOs 1&ndash;8), then the probing table (TODOs 9&ndash;13). Each TODO in the source names the Code-Together section to review.</p>
 
-<details style="border: 1px solid #d7dae0; border-left: 4px solid #1c7e45; border-radius: 8px; padding: .5rem 1rem; margin: .6rem 0; background: #fcfcfd;">
-<summary style="cursor: pointer; list-style: none;"><h3 style="display: inline-block; margin: .25rem 0; font-size: 1.2rem; vertical-align: middle;">&#x1F4CA; Grading (100 points)</h3></summary>
-
-<p>Your code is auto-graded when you push. Tests check that each TODO produces the correct output.</p>
 <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
-    <thead>
-        <tr>
-            <th style="border: 1px solid #c7cdd1; padding: 10px 14px; background-color: #f5f5f5"><strong>Category</strong></th>
-            <th style="border: 1px solid #c7cdd1; padding: 10px 14px; background-color: #f5f5f5"><strong>Points</strong></th>
-            <th style="border: 1px solid #c7cdd1; padding: 10px 14px; background-color: #f5f5f5"><strong>What is tested</strong></th>
-        </tr>
-    </thead>
+    <thead><tr>
+        <th scope="col" style="border: 1px solid #c7cdd1; padding: 10px 14px; text-align: left; background-color: #f5f5f5; font-weight: 700;">TODO</th>
+        <th scope="col" style="border: 1px solid #c7cdd1; padding: 10px 14px; text-align: left; background-color: #f5f5f5; font-weight: 700;">Method</th>
+        <th scope="col" style="border: 1px solid #c7cdd1; padding: 10px 14px; text-align: left; background-color: #f5f5f5; font-weight: 700;">Pts</th>
+        <th scope="col" style="border: 1px solid #c7cdd1; padding: 10px 14px; text-align: left; background-color: #f5f5f5; font-weight: 700;">Review</th>
+    </tr></thead>
     <tbody>
-        <tr>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Build</td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">0</td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Project must compile (tests won't run otherwise)</td>
-        </tr>
-        <tr style="background-color: #fafafa;">
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Chaining Hash Table</td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">**75**</td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;"></td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Constructor</td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">5</td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Correct capacity, size 0, buckets initialized</td>
-        </tr>
-        <tr style="background-color: #fafafa;">
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Destructor</td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">5</td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">No memory leaks (tested implicitly)</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>hash()</code></td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">10</td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Consistent hashing, good distribution across buckets</td>
-        </tr>
-        <tr style="background-color: #fafafa;">
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>insert()</code></td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">10</td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">New keys added, duplicate keys update value, size updates</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>search()</code></td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">10</td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Finds existing keys, returns indicator for missing keys</td>
-        </tr>
-        <tr style="background-color: #fafafa;">
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>remove()</code></td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">10</td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Removes from head/middle/tail of chain, no-op when missing</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>load_factor()</code> / <code>resize()</code></td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">15</td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Correct ratio, doubles-ish capacity, all entries rehashed</td>
-        </tr>
-        <tr style="background-color: #fafafa;">
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>print()</code></td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">10</td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Correct format showing each bucket's chain</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Probing Hash Table</td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">**55**</td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;"></td>
-        </tr>
-        <tr style="background-color: #fafafa;">
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Constructor</td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">5</td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Correct capacity, all slots marked empty</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>insert()</code></td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">10</td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Linear probing finds open slot, updates duplicates, reuses tombstones</td>
-        </tr>
-        <tr style="background-color: #fafafa;">
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>search()</code></td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">10</td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Probes past tombstones, stops at empty, finds existing keys</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>remove()</code></td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">15</td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Sets tombstone flag, doesn't break probe sequences</td>
-        </tr>
-        <tr style="background-color: #fafafa;">
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>resize()</code></td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">15</td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Grows table, rehashes occupied slots, skips tombstones</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px; background-color: #f5f5f5"><strong>Total</strong></td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px; background-color: #f5f5f5"><strong>130</strong></td>
-            <td style="border: 1px solid #c7cdd1; padding: 10px 14px; background-color: #f5f5f5;"></td>
-        </tr>
+        <tr><td colspan="4" style="border: 1px solid #c7cdd1; padding: 8px 14px; background-color: #eaf2f8; font-weight: 700;"><code>src/ChainingHashTable.cpp</code> &mdash; Part 1 (60 points)</td></tr>
+        <tr><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">1</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Constructor &mdash; allocate the bucket array</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">4</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">CT 11</td></tr>
+        <tr style="background-color: #fafafa;"><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">2</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Destructor &mdash; free every chain</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">5</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">CT 11</td></tr>
+        <tr><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">3</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>hash()</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">7</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">CT 11</td></tr>
+        <tr style="background-color: #fafafa;"><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">4</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>insert()</code> &mdash; add, or update an existing key</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">7</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">CT 11</td></tr>
+        <tr><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">5</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>search()</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">8</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">CT 11</td></tr>
+        <tr style="background-color: #fafafa;"><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">6</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>remove()</code> &mdash; trailing pointer through the chain</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">9</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">CT 11, CT 09</td></tr>
+        <tr><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">7</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>load_factor()</code> and <code>resize()</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">14</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">CT 11</td></tr>
+        <tr style="background-color: #fafafa;"><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">8</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>print()</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">6</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">CT 11</td></tr>
+        <tr><td colspan="4" style="border: 1px solid #c7cdd1; padding: 8px 14px; background-color: #eaf2f8; font-weight: 700;"><code>src/ProbingHashTable.cpp</code> &mdash; Part 2 (40 points)</td></tr>
+        <tr><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">9</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Constructor &mdash; <strong>already written</strong>; read it</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">3</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">CT 12</td></tr>
+        <tr style="background-color: #fafafa;"><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">10</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>insert()</code> &mdash; probe to a free slot</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">9</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">CT 12</td></tr>
+        <tr><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">11</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>search()</code> &mdash; probe until found or <code>EMPTY</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">9</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">CT 12</td></tr>
+        <tr style="background-color: #fafafa;"><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">12</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>remove()</code> &mdash; tombstone deletion</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">14</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">CT 12</td></tr>
+        <tr><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">13</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>resize()</code> &mdash; rehash, dropping tombstones</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">5</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">CT 12</td></tr>
     </tbody>
 </table>
+
+<div style="padding: 14px 18px; border-radius: 4px; margin-bottom: 16px; background-color: #f2dede; border: 1px solid #ebccd1; color: #a94442;">
+    <strong>TODO 7 and TODO 12 are worth 14 each</strong> &mdash; more than any other. Resizing has to <em>rehash</em> every entry into the new table, because an entry&#x2019;s bucket depends on the capacity. And a probing <code>remove()</code> has to leave a tombstone, not an empty slot, or every key that probed past it becomes unfindable.
+</div>
+</details>
+
+<details style="border: 1px solid #d7dae0; border-left: 4px solid #1c7e45; border-radius: 8px; padding: .5rem 1rem; margin: .6rem 0; background: #fcfcfd;">
+<summary style="cursor: pointer; list-style: none;"><h3 style="display: inline-block; margin: .25rem 0; font-size: 1.2rem; vertical-align: middle;">Things the Tests Check That Are Easy to Miss</h3></summary>
+
+<ul>
+    <li><strong><code>search()</code> returns a pointer, not a value.</strong> It returns an <code>int*</code> to the stored ID, or <code>nullptr</code> when the key is not there. The tests dereference it with <code>*</code></li>
+    <li><strong>Inserting a key that already exists updates it.</strong> The value changes and <code>size()</code> does not &mdash; both tables are tested for this</li>
+    <li><strong><code>remove()</code> returns <code>bool</code>.</strong> <code>true</code> when a key was removed; <code>false</code> for a missing key or an empty table, with <code>size()</code> unchanged</li>
+    <li><strong>Different keys should hash differently.</strong> <code>"alice"</code> and <code>"bob"</code> must not land on the same hash value, so a placeholder that returns 0 fails that test</li>
+    <li><strong>Each table has its own resize point.</strong> Chaining resizes once the load factor would pass <strong>1.0</strong> &mdash; the 8th insert into 7 buckets. Probing resizes once it would pass <strong>0.75</strong> &mdash; before the 6th insert into 7 slots</li>
+    <li><strong><code>print()</code> labels every bucket.</strong> Each line starts with the index, as in <code>&nbsp;&nbsp;[0]: </code>, and an empty bucket shows the word <code>empty</code></li>
+    <li><strong>A tombstone is not an empty slot.</strong> <code>remove()</code> marks the slot <code>DELETED</code>. <code>search()</code> keeps probing past <code>DELETED</code> and stops only at <code>EMPTY</code>; <code>insert()</code> may reuse a <code>DELETED</code> slot; <code>resize()</code> leaves tombstones behind</li>
+    <li><strong>In the probing table, <code>size_</code> counts <code>OCCUPIED</code> slots only</strong> &mdash; tombstones do not count</li>
+    <li><strong>No test can see a leak.</strong> The destructor tests delete a table and pass as long as nothing crashes, so an empty destructor still scores. Freeing every chain node is still your job</li>
+</ul>
+</details>
+
+<details style="border: 1px solid #d7dae0; border-left: 4px solid #1c7e45; border-radius: 8px; padding: .5rem 1rem; margin: .6rem 0; background: #fcfcfd;">
+<summary style="cursor: pointer; list-style: none;"><h3 style="display: inline-block; margin: .25rem 0; font-size: 1.2rem; vertical-align: middle;">Expected Output</h3></summary>
+
+<p>When every TODO is done, <code>./build/lab5-student-directory</code> prints this. The bucket listing is shortened here &mdash; yours shows every bucket and the names in each one.</p>
+<pre style="background-color: #1e1e1e; color: #d4d4d4; padding: 12px 16px; border-radius: 4px; overflow-x: auto; font-family: Consolas, 'Courier New', monospace; font-size: 0.8em; line-height: 1.55; margin: 8px 0;">=== Module 5 Lab: Student Directory ===
+
+--- Part 1: Chaining Hash Table ---
+Empty directory: size=0, capacity=7
+
+Registering students...
+  insert("Alice", 1001)
+  insert("Bob", 1002)
+  insert("Carol", 1003)
+  insert("Dave", 1004)
+  insert("Eve", 1005)
+
+Directory contents:
+  [0]: ...
+  [1]: ...
+  ...
+
+Looking up students...
+  search("Carol") = 1003
+  search("Zara") = not found
+
+Updating student ID...
+  insert("Alice", 9999)
+  search("Alice") = 9999
+
+Removing "Bob"...
+  Directory size: 4
+
+Resize test (load factor trigger)...
+  Before: capacity=7, load_factor=0.57
+  After more inserts: capacity=17, load_factor=0.47
+
+--- Part 2: Probing Hash Table ---
+Empty directory: size=0, capacity=7
+
+Registering students...
+  insert("Frank", 2001)
+  insert("Grace", 2002)
+  insert("Heidi", 2003)
+  insert("Ivan", 2004)
+
+Looking up students...
+  search("Heidi") = 2003
+  search("Zara") = not found
+
+Removing "Grace" (tombstone)...
+  search("Heidi") = 2003  (still works past tombstone)
+  size: 3
+
+Resize test...
+  Before: capacity=7
+  After more inserts: capacity=17  (tombstones cleared)
+
+=== Lab 5 Complete ===</pre>
+</details>
+
+<details style="border: 1px solid #d7dae0; border-left: 4px solid #8e44ad; border-radius: 8px; padding: .5rem 1rem; margin: .6rem 0; background: #fcfcfd;">
+<summary style="cursor: pointer; list-style: none;"><h3 style="display: inline-block; margin: .25rem 0; font-size: 1.2rem; vertical-align: middle;">&#x1F4E4; Scoring &amp; Submitting (100 points)</h3></summary>
+
+<p>Run the scorecard from the top of your repository:</p>
+<pre style="background-color: #1e1e1e; color: #d4d4d4; padding: 12px 16px; border-radius: 4px; overflow-x: auto; font-family: Consolas, 'Courier New', monospace; font-size: 0.875em; line-height: 1.6; margin: 8px 0;">python3 tests/scorecard.py</pre>
+<p>Work until it says 100. Each test is scored on its own, so a method can be partly right. A finished run looks like this:</p>
+<pre style="background-color: #1e1e1e; color: #d4d4d4; padding: 12px 16px; border-radius: 4px; overflow-x: auto; font-family: Consolas, 'Courier New', monospace; font-size: 0.8em; line-height: 1.55; margin: 8px 0;">========================================================================
+                YOUR SCORE -- Lab 5 - Student Directory
+========================================================================
+  GitHub user   your-github-username
+  Repository    lab5-student-directory-your-github-username
+  Submitted by  Your Name your.name@mail.weber.edu
+  Run at        2026-10-14 17:32
+------------------------------------------------------------------------
+  Chaining    constructor                     2 of 2    4/4
+  Chaining    destructor                      2 of 2    5/5
+  Chaining    hash()                          3 of 3    7/7
+  Chaining    insert()                        3 of 3    7/7
+  Chaining    search()                        4 of 4    8/8
+  Chaining    remove()                        5 of 5    9/9
+  Chaining    load factor                     2 of 2    6/6
+  Chaining    resize()                        2 of 2    8/8
+  Chaining    print()                         3 of 3    6/6
+  Probing     constructor                     1 of 1    3/3
+  Probing     insert()                        4 of 4    9/9
+  Probing     search()                        4 of 4    9/9
+  Probing     remove()                        4 of 4    8/8
+  Probing     tombstones                      2 of 2    6/6
+  Probing     resize()                        3 of 3    5/5
+------------------------------------------------------------------------
+  TOTAL                                               100/100 (100%)
+========================================================================</pre>
+<p><strong>Submit a screenshot of that output.</strong> Upload it to this assignment in Canvas &mdash; PNG or JPG. The header must be visible; that is what identifies the work as yours.</p>
+<div style="padding: 14px 18px; border-radius: 4px; margin-bottom: 16px; background-color: #d9edf7; border: 1px solid #bce8f1; color: #31708f;">
+    <strong>You do not type your name anywhere.</strong> The scorecard reads it from your repository &mdash; your GitHub username from the <code>git remote</code>, your name and email from the <code>git config</code> identity you set up in Module 0. If the header says the identity is not set, fix that before screenshotting.
+</div>
+<div style="padding: 14px 18px; border-radius: 4px; margin-bottom: 16px; background-color: #fcf8e3; border: 1px solid #faebcc; color: #8a6d3b;">
+    <strong>Push your work as well.</strong> The screenshot is what you hand in, but your repository is re-graded from the code you pushed, and the two should agree. Work left uncommitted on your laptop is not there at grading time, however finished it is.
+</div>
+<blockquote>
+<p>The scorecard is the only score you need to look at. Your repository has no green checkmarks to wait on &mdash; the grading run happens on the instructor's side after the due date.</p>
+</blockquote>
 </details>
 
 <details style="border: 1px solid #d7dae0; border-left: 4px solid #c0392b; border-radius: 8px; padding: .5rem 1rem; margin: .6rem 0; background: #fcfcfd;">
-<summary style="cursor: pointer; list-style: none;"><h3 style="display: inline-block; margin: .25rem 0; font-size: 1.2rem; vertical-align: middle;">&#x1F527; Troubleshooting</h3></summary>
+<summary style="cursor: pointer; list-style: none;"><h3 style="display: inline-block; margin: .25rem 0; font-size: 1.2rem; vertical-align: middle;">&#x1F527; Common Problems</h3></summary>
 
-
-<h4>CMake does not configure automatically</h4>
+<h4>CMake does not configure</h4>
 <ol>
-    <li>Check the bottom-left corner of VS Code reads <strong>Dev Container</strong>. If it does not, press <strong>Ctrl+Shift+P</strong> and run <strong>Dev Containers: Reopen in Container</strong></li>
-    <li>Make sure <strong>Docker Desktop</strong> is running, then reopen the folder</li>
+    <li>Confirm you are inside the Dev Container &mdash; check the bottom-left corner of VS Code</li>
     <li>Delete the <code>build/</code> folder and run <code>cmake -B build</code> again</li>
-    <li>Verify that <code>CMakeLists.txt</code> is in the root of your cloned repository</li>
+    <li>Confirm <code>CMakeLists.txt</code> sits in the root of your clone</li>
 </ol>
+
+<h4>Nearly everything fails, even the search tests</h4>
+<ul>
+    <li><code>insert()</code> is not working yet. Almost every test inserts first, so fix TODO 4 (chaining) or TODO 10 (probing) before anything else</li>
+</ul>
+
+<h4>Inserting the same key twice makes <code>size()</code> go up</h4>
+<ul>
+    <li>Look for the key before adding it. If it is already there, change its value and return &mdash; do not add a second entry</li>
+</ul>
+
+<h4>A probing test hangs</h4>
+<ul>
+    <li>The probe loop never meets an <code>EMPTY</code> slot. Make sure the index wraps with <code>% capacity_</code>, and that the table resizes before it fills up</li>
+</ul>
+
+<h4>After a probing <code>remove()</code>, other keys cannot be found</h4>
+<ul>
+    <li>The removed slot was set to <code>EMPTY</code>. Set it to <code>DELETED</code> &mdash; a search stops at the first <code>EMPTY</code> it meets, so an empty hole cuts every probe sequence that ran through it</li>
+</ul>
+
+<h4>After a resize, entries are missing</h4>
+<ul>
+    <li>Every entry has to be <em>rehashed</em> with the new capacity &mdash; copying slot <code>i</code> to slot <code>i</code> puts them where no search will look</li>
+    <li>Insert into the <em>new</em> array, then free the old one and update <code>capacity_</code>. And check that <code>size_</code> ends up where it started</li>
+</ul>
+
+<h4>Chaining <code>remove()</code> crashes, or fails on the first node in a bucket</h4>
+<ul>
+    <li>When the match is the head of the chain there is no <code>prev</code>; point the bucket itself at <code>current-&gt;next</code>. Otherwise use the trailing pointer from CT 09: <code>prev-&gt;next = current-&gt;next</code>, then <code>delete current</code></li>
+</ul>
 
 <h4>Tests fail to build</h4>
 <ul>
-    <li>Google Test is fetched automatically via CMake&#x2019;s <code>FetchContent</code> &mdash; make sure you have an internet connection during the first build</li>
-    <li>Do <strong>not</strong> modify header files in the <code>include/</code> folder</li>
+    <li>Google Test downloads during <code>cmake -B build</code> &mdash; you need internet access the first time</li>
+    <li>Do not modify anything in <code>include/</code>, <code>tests/</code> or <code>src/main.cpp</code></li>
 </ul>
-
-<h4>Running the Program</h4>
-<ol>
-    <li>In the container terminal, run <code>./build/lab5-student-directory</code></li>
-    <li>Or press <strong>Ctrl+Shift+P</strong> and run <strong>CMake: Run Without Debugging</strong></li>
-    <li>You should see output from each section as you complete the TODOs</li>
-</ol>
-
-<div style="padding: 14px 18px; border-radius: 4px; margin-bottom: 16px; background-color: #dff0d8; border: 1px solid #d6e9c6; color: #3c763d;">
-    <strong>Tip:</strong> Look for the <code>// ! DISCUSSION:</code> comments in each file &mdash; these explain the &#x201C;why&#x201D; behind each concept. The <code>// ? SEE DIAGRAM:</code> comments point you to visual aids in the <code>images/</code> folder.
-</div>
 </details>
-

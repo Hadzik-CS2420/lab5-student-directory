@@ -22,10 +22,10 @@ static std::string capture_probe_print(const ProbingHashTable& table) {
 }
 
 // =============================================================================
-// CHAINING HASH TABLE TESTS (TODOs 1-8, 75 pts)
+// CHAINING HASH TABLE TESTS (TODOs 1-8, 60 pts)
 // =============================================================================
 
-// ==================== TODO 1: Constructor (5 pts) ============================
+// ==================== TODO 1: Constructor (4 pts) ============================
 
 TEST(ChainingTest, ConstructorDefaultCapacity) {
     ChainingHashTable table;
@@ -262,10 +262,10 @@ TEST(ChainingTest, PrintFormatBucketIndex) {
 }
 
 // =============================================================================
-// PROBING HASH TABLE TESTS (TODOs 9-13, 55 pts)
+// PROBING HASH TABLE TESTS (TODOs 9-13, 40 pts)
 // =============================================================================
 
-// ==================== TODO 9: Constructor (5 pts — provided) =================
+// ==================== TODO 9: Constructor (3 pts — provided) =================
 
 TEST(ProbingTest, ConstructorDefaultCapacity) {
     ProbingHashTable table;

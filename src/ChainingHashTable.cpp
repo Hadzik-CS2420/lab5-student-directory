@@ -3,7 +3,7 @@
 // =============================================================================
 //
 // Implement all 8 TODOs below. Each method follows the same pattern you
-// built in Code-Together 10. The headers, main.cpp, and tests are provided
+// built in Code-Together 11. The headers, main.cpp, and tests are provided
 // — do not modify them.
 //
 
@@ -30,14 +30,14 @@ int ChainingHashTable::next_prime(int n) {
 }
 
 // ---------------------------------------------------------------------------
-// TODO 1: Constructor — allocate bucket array (5 pts)
+// TODO 1: Constructor — allocate bucket array (4 pts)
 // ---------------------------------------------------------------------------
 // - Initialize size_ to 0 and capacity_ to the given capacity
 // - Allocate an array of ChainNode* pointers on the heap
 // - Zero-initialize every bucket to nullptr (empty chain)
 //   Hint: new ChainNode*[capacity_]() — the () does the zero-init
 //
-// Review: CT10 Section 1
+// Review: CT 11 Section 1
 //
 ChainingHashTable::ChainingHashTable(int capacity)
     : size_(0), capacity_(capacity) {
@@ -53,21 +53,21 @@ ChainingHashTable::ChainingHashTable(int capacity)
 //     save current, advance to next, delete saved
 // - After all chains are deleted, delete[] the bucket array itself
 //
-// Review: CT10 Section 2
+// Review: CT 11 Section 2
 //
 ChainingHashTable::~ChainingHashTable() {
     // TODO 2: delete all chains, then delete[] buckets_
 }
 
 // ---------------------------------------------------------------------------
-// TODO 3: hash() — custom hash function (10 pts)
+// TODO 3: hash() — custom hash function (7 pts)
 // ---------------------------------------------------------------------------
 // Two steps:
 //   Step 1 (multiply-and-add): loop through each character of the key
 //     hash_value = hash_value * 31 + character
 //   Step 2 (modulo): return hash_value % capacity_
 //
-// Review: CT10 Section 3
+// Review: CT 11 Section 3
 //
 size_t ChainingHashTable::hash(const std::string& key) const {
     // TODO 3: implement multiply-and-add hash, then modulo
@@ -75,7 +75,7 @@ size_t ChainingHashTable::hash(const std::string& key) const {
 }
 
 // ---------------------------------------------------------------------------
-// TODO 4: insert() — add or update a key-value pair (10 pts)
+// TODO 4: insert() — add or update a key-value pair (7 pts)
 // ---------------------------------------------------------------------------
 // - Hash the key to find the bucket index
 // - Walk the chain at that bucket looking for a matching key
@@ -85,21 +85,21 @@ size_t ChainingHashTable::hash(const std::string& key) const {
 // - Increment size_ when adding a new entry
 // - After inserting, check load_factor() > MAX_LOAD_FACTOR and resize()
 //
-// Review: CT10 Section 4
+// Review: CT 11 Section 4
 //
 void ChainingHashTable::insert(const std::string& key, int value) {
     // TODO 4: insert or update, then check load factor
 }
 
 // ---------------------------------------------------------------------------
-// TODO 5: search() — find value by key (10 pts)
+// TODO 5: search() — find value by key (8 pts)
 // ---------------------------------------------------------------------------
 // - Hash the key to find the bucket index
 // - Walk the chain comparing keys
 // - If found: return a pointer to the node's value (&current->value)
 // - If not found: return nullptr
 //
-// Review: CT10 Section 5
+// Review: CT 11 Section 5
 //
 int* ChainingHashTable::search(const std::string& key) const {
     // TODO 5: search the chain at the hashed bucket
@@ -107,17 +107,17 @@ int* ChainingHashTable::search(const std::string& key) const {
 }
 
 // ---------------------------------------------------------------------------
-// TODO 6: remove() — delete a key from its chain (10 pts)
+// TODO 6: remove() — delete a key from its chain (9 pts)
 // ---------------------------------------------------------------------------
 // - Hash the key to find the bucket index
-// - Walk with current and prev pointers (trailing-pointer pattern from CT8)
+// - Walk with current and prev pointers (trailing-pointer pattern from CT 09)
 // - Three cases:
 //   1. Key at HEAD of chain → buckets_[index] = current->next
 //   2. Key in MIDDLE/TAIL → prev->next = current->next
 //   3. Key NOT FOUND → return false
 // - Delete the node and decrement size_ when found
 //
-// Review: CT10 Section 6, CT8 trailing-pointer pattern
+// Review: CT 11 Section 6, CT 09 trailing-pointer pattern
 //
 bool ChainingHashTable::remove(const std::string& key) {
     // TODO 6: find and unlink the node, then delete it
@@ -125,7 +125,7 @@ bool ChainingHashTable::remove(const std::string& key) {
 }
 
 // ---------------------------------------------------------------------------
-// TODO 7: load_factor() and resize() (15 pts)
+// TODO 7: load_factor() and resize() (14 pts)
 // ---------------------------------------------------------------------------
 // load_factor():
 //   - Return size_ / capacity_ as a double
@@ -140,7 +140,7 @@ bool ChainingHashTable::remove(const std::string& key) {
 //     (walk each old bucket's chain, insert each key/value, delete old nodes)
 //   - delete[] the old bucket array
 //
-// Review: CT10 Section 7
+// Review: CT 11 Section 7
 //
 double ChainingHashTable::load_factor() const {
     // TODO 7a: return the load factor
@@ -152,7 +152,7 @@ void ChainingHashTable::resize() {
 }
 
 // ---------------------------------------------------------------------------
-// TODO 8: print() — display each bucket's chain (10 pts)
+// TODO 8: print() — display each bucket's chain (6 pts)
 // ---------------------------------------------------------------------------
 // Format for each bucket:
 //   [i]: empty                          (if chain is nullptr)
@@ -164,7 +164,7 @@ void ChainingHashTable::resize() {
 //   with " -> " between nodes (but not after the last one)
 // - End each bucket with "\n"
 //
-// Review: CT10 Section 8
+// Review: CT 11 Section 8
 //
 void ChainingHashTable::print() const {
     // TODO 8: print each bucket's chain

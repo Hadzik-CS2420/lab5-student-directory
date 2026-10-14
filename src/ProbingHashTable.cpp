@@ -3,7 +3,7 @@
 // =============================================================================
 //
 // Implement all 5 TODOs below (9-13). Each method follows the same pattern
-// you built in Code-Together 11. The headers, main.cpp, and tests are
+// you built in Code-Together 12. The headers, main.cpp, and tests are
 // provided — do not modify them.
 //
 
@@ -79,7 +79,7 @@ void ProbingHashTable::print() const {
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// TODO 10: insert() — linear probing to find open slot (10 pts)
+// TODO 10: insert() — linear probing to find open slot (9 pts)
 // ---------------------------------------------------------------------------
 // - Check load factor FIRST: if (size_ + 1) / capacity_ > MAX_LOAD_FACTOR,
 //   call resize() before inserting
@@ -91,14 +91,14 @@ void ProbingHashTable::print() const {
 //   3. OCCUPIED slot with DIFFERENT key → probe to next slot:
 //      index = (index + 1) % capacity_
 //
-// Review: CT11 Section 4
+// Review: CT 12 Section 4
 //
 void ProbingHashTable::insert(const std::string& key, int value) {
     // TODO 10: linear probing insert
 }
 
 // ---------------------------------------------------------------------------
-// TODO 11: search() — linear probing to find key (10 pts)
+// TODO 11: search() — linear probing to find key (9 pts)
 // ---------------------------------------------------------------------------
 // - Hash the key to get the starting index
 // - Probe forward:
@@ -107,7 +107,7 @@ void ProbingHashTable::insert(const std::string& key, int value) {
 //   - OCCUPIED + different key → keep probing
 //   - DELETED → keep probing (tombstone — someone was here, key may be past)
 //
-// Review: CT11 Section 5
+// Review: CT 12 Section 5
 //
 int* ProbingHashTable::search(const std::string& key) const {
     // TODO 11: linear probing search
@@ -115,7 +115,7 @@ int* ProbingHashTable::search(const std::string& key) const {
 }
 
 // ---------------------------------------------------------------------------
-// TODO 12: remove() — tombstone deletion (15 pts)
+// TODO 12: remove() — tombstone deletion (14 pts)
 // ---------------------------------------------------------------------------
 // - Hash the key to get the starting index
 // - Probe forward:
@@ -129,7 +129,7 @@ int* ProbingHashTable::search(const std::string& key) const {
 // sequences for keys inserted after this one. DELETED tells future
 // searches: "keep looking, someone might be past me."
 //
-// Review: CT11 Section 6
+// Review: CT 12 Section 6
 //
 bool ProbingHashTable::remove(const std::string& key) {
     // TODO 12: tombstone deletion
@@ -137,7 +137,7 @@ bool ProbingHashTable::remove(const std::string& key) {
 }
 
 // ---------------------------------------------------------------------------
-// TODO 13: resize() — grow and rehash, skip tombstones (15 pts)
+// TODO 13: resize() — grow and rehash, skip tombstones (5 pts)
 // ---------------------------------------------------------------------------
 // - Save the old capacity and old table_ pointer
 // - Set capacity_ to next_prime(old_capacity * 2)
@@ -149,7 +149,7 @@ bool ProbingHashTable::remove(const std::string& key) {
 //
 // This clears all tombstones — only live entries are rehashed.
 //
-// Review: CT11 Section 8
+// Review: CT 12 Section 8
 //
 void ProbingHashTable::resize() {
     // TODO 13: grow table, rehash occupied entries, skip tombstones
